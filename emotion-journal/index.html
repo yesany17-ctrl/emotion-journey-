@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emotion Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f5f7ff;
+      --card: #ffffff;
+      --text: #1f2844;
+      --muted: #66708f;
+      --primary: #6374ff;
+      --primary-soft: #e5e9ff;
+      --border: #e9edff;
+      --shadow: 0 10px 35px rgba(40, 55, 120, 0.12);
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at 15% 15%, #f0eaff 0%, transparent 32%),
+        radial-gradient(circle at 85% 10%, #e8f4ff 0%, transparent 35%),
+        var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      min-height: 100%;
+    }
+
+    .wrapper {
+      max-width: 980px;
+      margin: 44px auto;
+      padding: 0 18px 40px;
+      animation: floatIn 0.6s ease;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 10px auto 0;
+      color: var(--muted);
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-top: 20px;
+    }
+
+    .journal-input {
+      width: 100%;
+      min-height: 185px;
+      resize: vertical;
+      border: 1px solid #dce3ff;
+      border-radius: var(--radius-md);
+      outline: none;
+      padding: 15px;
+      font-size: 1rem;
+      line-height: 1.55;
+      color: var(--text);
+      background: #fcfdff;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .journal-input:focus {
+      border-color: #8ea0ff;
+      box-shadow: 0 0 0 4px rgba(99, 116, 255, 0.13);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .analyse-btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(135deg, #6d7aff, #53a7ff);
+      box-shadow: 0 8px 22px rgba(83, 137, 255, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .analyse-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 11px 25px rgba(83, 137, 255, 0.45);
+      filter: brightness(1.03);
+    }
+
+    .analyse-btn:active {
+      transform: translateY(1px);
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .emotion-result {
+      display: none;
+      margin-top: 16px;
+      border-radius: var(--radius-md);
+      border: 1px dashed #d7deff;
+      background: linear-gradient(180deg, #fbfcff 0%, #f5f8ff 100%);
+      padding: 14px;
+      gap: 12px;
+      align-items: center;
+      animation: popIn 0.35s ease;
+    }
+
+    .emotion-result.show {
+      display: flex;
+    }
+
+    .emotion-emoji {
+      font-size: 2.2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: white;
+      border: 1px solid #e6ebff;
+      box-shadow: 0 8px 18px rgba(60, 90, 180, 0.1);
+      flex-shrink: 0;
+    }
+
+    .emotion-text h3 {
+      margin: 0 0 5px;
+      font-size: 1.1rem;
+    }
+
+    .emotion-text p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .section-title {
+      margin: 6px 0 2px;
+      font-size: 1.15rem;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .empty {
+      margin-top: 10px;
+      color: var(--muted);
+      background: #f8faff;
+      border: 1px solid #e6ebff;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .entry {
+      border: 1px solid #e7ecff;
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      background: #fbfcff;
+      transform-origin: top;
+      animation: fadeUp 0.32s ease;
+    }
+
+    .entry-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .entry-date {
+      font-size: 0.87rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .entry-mood {
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: var(--primary-soft);
+      color: #3e4ecc;
+      border: 1px solid #d8e0ff;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .entry p {
+      margin: 0;
+      line-height: 1.56;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 330px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .wrapper {
+        margin-top: 20px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .chart-container {
+        height: 260px;
+      }
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <section class="hero">
+      <h1>Emotion Journal</h1>
+      <p>Write how your day feels. Analyse your mood instantly and track your emotional pattern over time.</p>
+    </section>
+
+    <section class="card">
+      <textarea id="journalInput" class="journal-input" placeholder="How are you feeling today? Write freely..."></textarea>
+      <div class="controls">
+        <button id="analyseBtn" class="analyse-btn">Analyse my mood</button>
+        <span class="helper">Keyword-based mood detection: happy, sad, angry, anxious, excited, calm, neutral</span>
+      </div>
+
+      <div id="emotionResult" class="emotion-result" aria-live="polite">
+        <div id="emotionEmoji" class="emotion-emoji">🙂</div>
+        <div class="emotion-text">
+          <h3 id="emotionName">Neutral</h3>
+          <p id="emotionHint">Your detected emotion appears here after analysis.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Your Timeline</h2>
+      <p class="helper">Every analysis is saved with date, entry, and detected mood.</p>
+      <div id="timeline" class="timeline"></div>
+      <div id="emptyTimeline" class="empty">No entries yet. Write your first entry above and click "Analyse my mood".</div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Mood Chart</h2>
+      <p class="helper">Count of each detected emotion across all journal entries.</p>
+      <div class="chart-container">
+        <canvas id="moodChart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "emotionJournalEntries";
+    const EMOTIONS = ["happy", "sad", "angry", "anxious", "excited", "calm", "neutral"];
+    const EMOTION_META = {
+      happy: { emoji: "😊", color: "#f6b73c", hint: "You seem to be feeling positive and uplifted." },
+      sad: { emoji: "😢", color: "#5e8bff", hint: "It sounds like today has some heavy feelings." },
+      angry: { emoji: "😠", color: "#ff6b6b", hint: "Your words suggest frustration or anger." },
+      anxious: { emoji: "😟", color: "#a46bff", hint: "There are signs of worry or stress in your entry." },
+      excited: { emoji: "🤩", color: "#ff8c42", hint: "Your energy feels enthusiastic and excited." },
+      calm: { emoji: "😌", color: "#3ebf99", hint: "Your tone appears peaceful and grounded." },
+      neutral: { emoji: "😐", color: "#7a859f", hint: "Your mood reads as balanced or neutral." }
+    };
+
+    const KEYWORDS = {
+      happy: ["happy", "joy", "joyful", "grateful", "good", "great", "smile", "pleased", "content", "wonderful"],
+      sad: ["sad", "down", "upset", "depressed", "cry", "lonely", "hurt", "heartbroken", "miserable", "gloomy"],
+      angry: ["angry", "mad", "furious", "annoyed", "frustrated", "irritated", "rage", "hate", "resent", "outraged"],
+      anxious: ["anxious", "worried", "nervous", "stressed", "overthinking", "tense", "panic", "uneasy", "afraid", "fearful"],
+      excited: ["excited", "thrilled", "pumped", "eager", "hyped", "can't wait", "energetic", "stoked", "amazing", "awesome"],
+      calm: ["calm", "peaceful", "relaxed", "serene", "quiet", "steady", "centered", "balanced", "at ease", "still"]
+    };
+
+    const journalInput = document.getElementById("journalInput");
+    const analyseBtn = document.getElementById("analyseBtn");
+    const emotionResult = document.getElementById("emotionResult");
+    const emotionEmoji = document.getElementById("emotionEmoji");
+    const emotionName = document.getElementById("emotionName");
+    const emotionHint = document.getElementById("emotionHint");
+    const timeline = document.getElementById("timeline");
+    const emptyTimeline = document.getElementById("emptyTimeline");
+
+    const entries = loadEntries();
+    let moodChart = null;
+
+    function loadEntries() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveEntries() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function detectEmotion(text) {
+      const normalized = text.toLowerCase();
+      const scores = {
+        happy: 0,
+        sad: 0,
+        angry: 0,
+        anxious: 0,
+        excited: 0,
+        calm: 0
+      };
+
+      Object.entries(KEYWORDS).forEach(([emotion, words]) => {
+        words.forEach((word) => {
+          if (normalized.includes(word)) {
+            scores[emotion] += 1;
+          }
+        });
+      });
+
+      let topEmotion = "neutral";
+      let topScore = 0;
+
+      Object.entries(scores).forEach(([emotion, score]) => {
+        if (score > topScore) {
+          topScore = score;
+          topEmotion = emotion;
+        }
+      });
+
+      return topEmotion;
+    }
+
+    function showEmotion(emotion) {
+      const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
+      emotionEmoji.textContent = meta.emoji;
+      emotionName.textContent = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+      emotionHint.textContent = meta.hint;
+      emotionResult.classList.add("show");
+      emotionResult.style.borderColor = `${meta.color}55`;
+      emotionResult.style.boxShadow = `0 10px 24px ${meta.color}1f`;
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      };
+      return text.replace(/[&<>"']/g, (m) => map[m]);
+    }
+
+    function renderTimeline() {
+      if (!entries.length) {
+        timeline.innerHTML = "";
+        emptyTimeline.style.display = "block";
+        return;
+      }
+
+      emptyTimeline.style.display = "none";
+
+      timeline.innerHTML = [...entries].reverse().map((entry) => {
+        const meta = EMOTION_META[entry.emotion] || EMOTION_META.neutral;
+        return `
+          <article class="entry">
+            <div class="entry-top">
+              <span class="entry-date">${formatDate(entry.date)}</span>
+              <span class="entry-mood">${meta.emoji} ${entry.emotion}</span>
+            </div>
+            <p>${escapeHtml(entry.text)}</p>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function getEmotionCounts() {
+      const counts = {};
+      EMOTIONS.forEach((emotion) => {
+        counts[emotion] = 0;
+      });
+
+      entries.forEach((entry) => {
+        if (Object.prototype.hasOwnProperty.call(counts, entry.emotion)) {
+          counts[entry.emotion] += 1;
+        }
+      });
+
+      return counts;
+    }
+
+    function renderChart() {
+      const counts = getEmotionCounts();
+      const labels = EMOTIONS.map((emotion) => emotion.charAt(0).toUpperCase() + emotion.slice(1));
+      const values = EMOTIONS.map((emotion) => counts[emotion]);
+      const colors = EMOTIONS.map((emotion) => EMOTION_META[emotion].color);
+
+      if (moodChart) {
+        moodChart.data.labels = labels;
+        moodChart.data.datasets[0].data = values;
+        moodChart.data.datasets[0].backgroundColor = colors;
+        moodChart.update();
+        return;
+      }
+
+      const ctx = document.getElementById("moodChart").getContext("2d");
+      moodChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: "Mood Count",
+            data: values,
+            borderRadius: 10,
+            borderSkipped: false,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 700,
+            easing: "easeOutQuart"
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: "#1f2844",
+              padding: 10,
+              titleFont: { weight: "700" },
+              bodyFont: { weight: "600" }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                color: "#5c6785",
+                font: { weight: "600" }
+              },
+              grid: {
+                color: "#ecf0ff"
+              }
+            },
+            x: {
+              ticks: {
+                color: "#5c6785",
+                font: { weight: "600" }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    analyseBtn.addEventListener("click", () => {
+      const text = journalInput.value.trim();
+      if (!text) {
+        journalInput.focus();
+        return;
+      }
+
+      const emotion = detectEmotion(text);
+      const entry = {
+        date: new Date().toISOString(),
+        text,
+        emotion
+      };
+
+      entries.push(entry);
+      saveEntries();
+      showEmotion(emotion);
+      renderTimeline();
+      renderChart();
+      journalInput.value = "";
+      journalInput.focus();
+    });
+
+    renderTimeline();
+    renderChart();
+  </script>
+</body>
+</html>
